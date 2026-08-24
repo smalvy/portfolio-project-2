@@ -5,6 +5,15 @@ Description: >
   portfolio-project-2
 
   Sample SAM Template for portfolio-project-2
+Parameters:
+  CommitShaValue:
+    Description: Commit SHA value passed by the pipeline
+    Type: String
+    Default: unknown # this value must match the default value assigned to the variable commit_sha inside app.py file
+  BuildTimestampValue:
+    Description: Build timestamp value passed by the pipeline
+    Type: String
+    Default: 0001-01-01T00:00:00+00:00 # this value must match the default value assigned to the variable build_timestamp inside app.py file
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -20,6 +29,10 @@ Resources:
       Runtime: python3.14
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          COMMIT_SHA: !Ref CommitShaValue
+          BUILD_TIMESTAMP: !Ref BuildTimestampValue
 
 Outputs:
   VersionFunction:
