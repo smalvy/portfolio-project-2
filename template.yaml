@@ -33,6 +33,22 @@ Resources:
         Variables:
           COMMIT_SHA: !Ref CommitShaValue
           BUILD_TIMESTAMP: !Ref BuildTimestampValue
+      FunctionUrlConfig:
+        AuthType: AWS_IAM
+  InvokeFunctionUrlResourceBasedPolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref VersionFunction
+      FunctionUrlAuthType: AWS_IAM
+      Principal: !Sub arn:aws:iam::${AWS::AccountId}:user/portfolio-deployer
+  InvokeFunctionResourceBasedPolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref VersionFunction
+      InvokedViaFunctionUrl: true
+      Principal: !Sub arn:aws:iam::${AWS::AccountId}:user/portfolio-deployer
 
 Outputs:
   VersionFunction:
@@ -41,3 +57,6 @@ Outputs:
   VersionFunctionIamRole:
     Description: "Implicit IAM Role created for Version function"
     Value: !GetAtt VersionFunctionRole.Arn
+  VersionFunctionUrl:
+    Description: "Version Lambda Function URL"
+    Value: !GetAtt VersionFunctionUrl.FunctionUrl
