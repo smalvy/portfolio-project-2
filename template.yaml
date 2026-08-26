@@ -19,6 +19,8 @@ Parameters:
 Globals:
   Function:
     Timeout: 3
+    Tags:
+      Project: portfolio-project-2
 
 Resources:
   VersionFunction:
