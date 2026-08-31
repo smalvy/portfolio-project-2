@@ -1,4 +1,4 @@
-
+# Modified by smalvy, 2026 — adapted for portfolio-project-2
 # Created by https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
 
 ### Linux ###
@@ -194,6 +194,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+env.json
 
 # Spyder project settings
 .spyderproject
@@ -240,5 +241,8 @@ $RECYCLE.BIN/
 # Build folder
 
 */build/*
+
+# AWS SAM build
+.aws-sam
 
 # End of https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode

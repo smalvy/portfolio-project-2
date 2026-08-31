@@ -1,41 +1,64 @@
+# Modified by smalvy, 2026 — adapted for portfolio-project-2
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   portfolio-project-2
 
   Sample SAM Template for portfolio-project-2
+Parameters:
+  CommitShaValue:
+    Description: Commit SHA value passed by the pipeline
+    Type: String
+    Default: unknown # this value must match the default value assigned to the variable commit_sha inside app.py file
+  BuildTimestampValue:
+    Description: Build timestamp value passed by the pipeline
+    Type: String
+    Default: 0001-01-01T00:00:00+00:00 # this value must match the default value assigned to the variable build_timestamp inside app.py file
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 3
+    Tags:
+      Project: portfolio-project-2
 
 Resources:
-  HelloWorldFunction:
+  VersionFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: hello_world/
-      Handler: app.lambda_handler
+      CodeUri: version_function/
+      Handler: app.version_handler
       Runtime: python3.14
       Architectures:
         - x86_64
-      Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /hello
-            Method: get
+      Environment:
+        Variables:
+          COMMIT_SHA: !Ref CommitShaValue
+          BUILD_TIMESTAMP: !Ref BuildTimestampValue
+      FunctionUrlConfig:
+        AuthType: AWS_IAM
+  InvokeFunctionUrlResourceBasedPolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref VersionFunction
+      FunctionUrlAuthType: AWS_IAM
+      Principal: !Sub arn:aws:iam::${AWS::AccountId}:user/portfolio-deployer
+  InvokeFunctionResourceBasedPolicy:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref VersionFunction
+      InvokedViaFunctionUrl: true
+      Principal: !Sub arn:aws:iam::${AWS::AccountId}:user/portfolio-deployer
 
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/hello/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  VersionFunction:
+    Description: "Version Lambda Function ARN"
+    Value: !GetAtt VersionFunction.Arn
+  VersionFunctionIamRole:
+    Description: "Implicit IAM Role created for Version function"
+    Value: !GetAtt VersionFunctionRole.Arn
+  VersionFunctionUrl:
+    Description: "Version Lambda Function URL"
+    Value: !GetAtt VersionFunctionUrl.FunctionUrl

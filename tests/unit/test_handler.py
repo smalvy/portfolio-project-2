@@ -1,72 +1,112 @@
+# Modified by smalvy, 2026 — adapted for portfolio-project-2
 import json
 
 import pytest
+import os
 
-from hello_world import app
+from version_function import app
+from unittest import mock
 
 
 @pytest.fixture()
-def apigw_event():
-    """ Generates API GW Event"""
+def event():
+    """ Generates a Function URL Event"""
 
     return {
-        "body": '{ "test": "body"}',
-        "resource": "/{proxy+}",
-        "requestContext": {
-            "resourceId": "123456",
-            "apiId": "1234567890",
-            "resourcePath": "/{proxy+}",
-            "httpMethod": "POST",
-            "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
-            "accountId": "123456789012",
-            "identity": {
-                "apiKey": "",
-                "userArn": "",
-                "cognitoAuthenticationType": "",
-                "caller": "",
-                "userAgent": "Custom User Agent String",
-                "user": "",
-                "cognitoIdentityPoolId": "",
-                "cognitoIdentityId": "",
-                "cognitoAuthenticationProvider": "",
-                "sourceIp": "127.0.0.1",
-                "accountId": "",
-            },
-            "stage": "prod",
-        },
-        "queryStringParameters": {"foo": "bar"},
+        "version": "2.0",
+        "routeKey": "$default",
+        "rawPath": "/my/path",
+        "rawQueryString": "parameter1=value1&parameter1=value2&parameter2=value",
+        "cookies": [
+            "cookie1",
+            "cookie2"
+        ],
         "headers": {
-            "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
-            "Accept-Language": "en-US,en;q=0.8",
-            "CloudFront-Is-Desktop-Viewer": "true",
-            "CloudFront-Is-SmartTV-Viewer": "false",
-            "CloudFront-Is-Mobile-Viewer": "false",
-            "X-Forwarded-For": "127.0.0.1, 127.0.0.2",
-            "CloudFront-Viewer-Country": "US",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Upgrade-Insecure-Requests": "1",
-            "X-Forwarded-Port": "443",
-            "Host": "1234567890.execute-api.us-east-1.amazonaws.com",
-            "X-Forwarded-Proto": "https",
-            "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
-            "CloudFront-Is-Tablet-Viewer": "false",
-            "Cache-Control": "max-age=0",
-            "User-Agent": "Custom User Agent String",
-            "CloudFront-Forwarded-Proto": "https",
-            "Accept-Encoding": "gzip, deflate, sdch",
+            "header1": "value1",
+            "header2": "value1,value2"
         },
-        "pathParameters": {"proxy": "/examplepath"},
-        "httpMethod": "POST",
-        "stageVariables": {"baz": "qux"},
-        "path": "/examplepath",
+        "queryStringParameters": {
+            "parameter1": "value1,value2",
+            "parameter2": "value"
+        },
+        "requestContext": {
+            "accountId": "123456789012",
+            "apiId": "<urlid>",
+            "authentication": None,
+            "authorizer": {
+                "iam": {
+                        "accessKey": "AKIA...",
+                        "accountId": "111122223333",
+                        "callerId": "AIDA...",
+                        "cognitoIdentity": None,
+                        "principalOrgId": None,
+                        "userArn": "arn:aws:iam::111122223333:user/example-user",
+                        "userId": "AIDA..."
+                }
+            },
+            "domainName": "<url-id>.lambda-url.us-west-2.on.aws",
+            "domainPrefix": "<url-id>",
+            "http": {
+            "method": "POST",
+            "path": "/my/path",
+            "protocol": "HTTP/1.1",
+            "sourceIp": "123.123.123.123",
+            "userAgent": "agent"
+            },
+            "requestId": "id",
+            "routeKey": "$default",
+            "stage": "$default",
+            "time": "12/Mar/2020:19:03:58 +0000",
+            "timeEpoch": 1583348638390
+        },
+        "body": "Hello from client!",
+        "pathParameters": None,
+        "isBase64Encoded": False,
+        "stageVariables": None
     }
 
 
-def test_lambda_handler(apigw_event):
+@mock.patch.dict(os.environ, {}, clear=True)
+def test_version_handler_default_env_values(event):
 
-    ret = app.lambda_handler(apigw_event, "")
+    ret = app.version_handler(event, "")
     data = json.loads(ret["body"])
 
     assert ret["statusCode"] == 200
+
     assert "message" in ret["body"]
-    assert data["message"] == "hello world"
+    assert isinstance(data["message"], str)
+    assert len(data["message"]) > 0
+
+    assert "version" in ret["body"]
+    assert isinstance(data["version"], str)
+    assert len(data["version"]) > 0
+
+    assert "commit_sha" in ret["body"]
+    assert data["commit_sha"] == "unknown"
+
+    assert "build_timestamp" in ret["body"]
+    assert data["build_timestamp"] == "0001-01-01T00:00:00+00:00"
+
+
+@mock.patch.dict(os.environ, {"COMMIT_SHA": "abc123-test", "BUILD_TIMESTAMP": "2026-08-20T00:00:00+00:00"})
+def test_version_handler_with_env_values(event):
+
+    ret = app.version_handler(event, "")
+    data = json.loads(ret["body"])
+
+    assert ret["statusCode"] == 200
+
+    assert "message" in ret["body"]
+    assert isinstance(data["message"], str)
+    assert len(data["message"]) > 0
+
+    assert "version" in ret["body"]
+    assert isinstance(data["version"], str)
+    assert len(data["version"]) > 0
+
+    assert "commit_sha" in ret["body"]
+    assert data["commit_sha"] == "abc123-test"
+
+    assert "build_timestamp" in ret["body"]
+    assert data["build_timestamp"] == "2026-08-20T00:00:00+00:00"
