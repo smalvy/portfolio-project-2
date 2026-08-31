@@ -48,5 +48,5 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 region = "" # set the region of your choice inside AWS
-profile = "" # set the profile name that contains credentials to connect to AWS through the CLI
+profile = "portfolio-deployer"
 stack_name = "portfolio-project-2"
